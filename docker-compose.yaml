@@ -1,0 +1,32 @@
+version: "3"
+services:
+  api:
+    container_name: crpkit_service_api
+    build: .
+    image: crpkit:latest
+    entrypoint: [""]
+    command: sh -c "python run_api.py"
+    environment:
+      CK_DEBUG: 1
+      CK_ENV: local
+      CK_DB_HOST: postgres
+      CK_DB_USER: postgres
+      CK_DB_PASSWORD: root
+      CK_DB_DB: crypkit
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: crypkit_db
+    image: postgres
+    environment:
+      POSTGRES_DB: crypkit
+      POSTGRES_PASSWORD: root
+    ports:
+        - "5432:5432"
+
+   
