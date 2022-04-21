@@ -1,10 +1,11 @@
 import logging
 import uvicorn
 from llconfig import Config
-
 from src.config import init_config
 from src.routers import v1
 from src.routers.system import system_router
+from src.utils import postgresql
+
 from fastapi import FastAPI
 
 logger = logging.getLogger(__name__)
@@ -28,9 +29,11 @@ async def start_api():
         api.include_router(system_router)
         api.include_router(v1.router)
 
-        # TODO: init sentry, metrics, logging, db connection etc here
+        # init postgresql engine
+        api.state.psql = await postgresql.get_postgresql_connection(config)
 
-    # we have to log the exception since uvicorn swallows it :/
+        # TODO: init sentry, metrics, logging etc here
+
     except Exception:
         logger.exception("Failed to finish fastapi.startup event")
         raise
@@ -45,4 +48,5 @@ def stop():
 
 
 if __name__ == "__main__":
-    uvicorn.run("__main__:api", host=config["HOST"], port=config["PORT"], debug=config["DEBUG"], reload=config["DEBUG"])
+    uvicorn.run("__main__:api", host=config["HOST"], port=config["PORT"], debug=config["DEBUG"],
+                reload=config["DEBUG"])

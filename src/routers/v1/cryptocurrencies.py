@@ -1,10 +1,18 @@
-from fastapi import APIRouter, Body, Depends, Path, Query
-from starlette.status import (
-    HTTP_200_OK,
-    HTTP_201_CREATED,
-    HTTP_409_CONFLICT,
-    HTTP_400_BAD_REQUEST,
-)
+from typing import Union
+
+import aiopg.sa
+from fastapi import APIRouter, Depends, Path
+from starlette.responses import Response
+from starlette.status import (HTTP_200_OK, HTTP_201_CREATED,
+                              HTTP_404_NOT_FOUND, HTTP_409_CONFLICT)
+
+from src.models.cryptocurrency import Cryptocurrency
+from src.models.schemas.responses.common import (RESPONSE_404_NOT_FOUND_BY_ID,
+                                                 RESPONSE_409_CONFLICT)
+from src.models.schemas.responses.cryptocurrency import (
+    CryptocurrencyBaseSchema, CryptocurrencyCreateSchema,
+    CryptocurrencyIdSchema, CryptocurrencyUpdateSchema)
+from src.routers import get_psql_engine
 
 router: APIRouter = APIRouter()
 
@@ -12,7 +20,7 @@ router: APIRouter = APIRouter()
 @router.post(
     "/cryptocurrency/",
     tags=["cryptocurrency"],
-    #TODO: response_model=,
+    response_model=CryptocurrencyIdSchema,
     description="Create single cryptocurrency",
     status_code=HTTP_201_CREATED,
     responses={
@@ -24,27 +32,109 @@ router: APIRouter = APIRouter()
         },
     },
 )
-async def create_cryptocurrency(
-        db: str,
-        # TODO: cryptocurrency: model,
-):
-    return {"data": {"id": 15}}
+async def create(
+    cryptocurrency: CryptocurrencyCreateSchema,
+    db_engine: aiopg.sa.Engine = Depends(get_psql_engine),
+) -> Union[CryptocurrencyIdSchema, Response]:
+    async with db_engine.acquire() as db_connection:
+        cryptocurrency_model = Cryptocurrency(db_connection)
+        result = await cryptocurrency_model.create(cryptocurrency)
+
+        if not result:
+            return RESPONSE_409_CONFLICT
+
+        return result
+
+
+@router.delete(
+    "/cryptocurrency/{id}",
+    tags=["cryptocurrency"],
+    response_model=CryptocurrencyIdSchema,
+    description="Delete cryptocurrency",
+    status_code=HTTP_201_CREATED,
+    responses={
+        HTTP_200_OK: {
+            "description": "Successfully deleted.",
+        },
+        HTTP_404_NOT_FOUND: {
+            "description": "Cryptocurrency have not been found.",
+            "content": {
+                "application/json": {
+                    "example": RESPONSE_404_NOT_FOUND_BY_ID("bitcoin").body,
+                },
+            },
+        },
+    },
+)
+async def delete(
+    id: str = Path(..., description="An id of cryptocurrency."),
+    db_engine: aiopg.sa.Engine = Depends(get_psql_engine),
+) -> Union[CryptocurrencyIdSchema, Response]:
+    async with db_engine.acquire() as db_connection:
+        cryptocurrency_model = Cryptocurrency(db_connection)
+        result = await cryptocurrency_model.delete(id)
+
+        if not result:
+            return RESPONSE_404_NOT_FOUND_BY_ID(id)
+
+        return result
+
+
+@router.patch(
+    "/cryptocurrency/",
+    tags=["cryptocurrency"],
+    response_model=CryptocurrencyBaseSchema,
+    description="Update cryptocurrency",
+    status_code=HTTP_201_CREATED,
+    responses={
+        HTTP_200_OK: {
+            "description": "Successfully updated.",
+        },
+    },
+)
+async def update(
+    id: str,
+    cryptocurrency: CryptocurrencyUpdateSchema,
+    db_engine: aiopg.sa.Engine = Depends(get_psql_engine),
+) -> Union[CryptocurrencyBaseSchema, Response]:
+    async with db_engine.acquire() as db_connection:
+        cryptocurrency_model = Cryptocurrency(db_connection)
+        result = await cryptocurrency_model.update(id, cryptocurrency)
+
+        if not result:
+            return RESPONSE_404_NOT_FOUND_BY_ID(id)
+
+        return result
 
 
 @router.get(
     "/cryptocurrency/{id}/",
     tags=["cryptocurrency"],
-    # TODO: response_model=,
+    response_model=CryptocurrencyBaseSchema,
     description="Get single cryptocurrency by id.",
     responses={
         HTTP_200_OK: {
             "description": "Successfully returned cryptocurrency.",
         },
+        HTTP_404_NOT_FOUND: {
+            "description": "Cryptocurrency have not been found.",
+            "content": {
+                "application/json": {
+                    "example": RESPONSE_404_NOT_FOUND_BY_ID("bitcoin").body,
+                },
+            },
+        },
     },
 )
-async def get_by_id(
-    id: int = Path(..., description="An id of a "),
-    # TODO: db: ,
-) -> dict:
+async def get(
+    id: str = Path(..., description="An id of a cryptocurrency"),
+    db_engine: aiopg.sa.Engine = Depends(get_psql_engine),
+) -> Union[CryptocurrencyBaseSchema, Response]:
+    async with db_engine.acquire() as db_connection:
+        cryptocurrency_model = Cryptocurrency(db_connection)
+        result = await cryptocurrency_model.get(id)
 
-    return {"data": "sddsd"}
+        if not result:
+            return RESPONSE_404_NOT_FOUND_BY_ID(id)
+
+        return result

@@ -15,8 +15,9 @@ def init_config() -> Config:
     # DB
     c.init("DB_HOST", str)
     c.init("DB_PASSWORD", str)
-    c.init("DB_DB", str)
+    c.init("DB_DBNAME", str)
     c.init("DB_USER", str)
+    c.init("DB_PORT", int, 5432)
 
     c.load()
 

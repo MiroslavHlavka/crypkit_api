@@ -12,7 +12,7 @@ services:
       CK_DB_HOST: postgres
       CK_DB_USER: postgres
       CK_DB_PASSWORD: root
-      CK_DB_DB: crypkit
+      CK_DB_DBNAME: crypkit
     volumes:
       - .:/app
     ports:
@@ -29,4 +29,18 @@ services:
     ports:
         - "5432:5432"
 
+  alembic:
+    depends_on:
+      - postgres
+    build:
+      context: .
+    entrypoint: /usr/local/bin/alembic
+    environment:
+      CK_DB_HOST: postgres
+      CK_DB_USER: postgres
+      CK_DB_PASSWORD: root
+      CK_DB_DBNAME: crypkit
+      PYTHONPATH: /usr/src/app/src
+    volumes:
+      - .:/app
    
