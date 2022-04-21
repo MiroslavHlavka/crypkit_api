@@ -12,7 +12,8 @@ from src.models.schemas.responses.common import (RESPONSE_404_NOT_FOUND_BY_ID,
 from src.models.schemas.responses.cryptocurrency import (
     CryptocurrencyBaseSchema, CryptocurrencyCreateSchema,
     CryptocurrencyIdSchema, CryptocurrencyUpdateSchema)
-from src.routers import get_psql_engine
+from src.routers import get_psql_engine, get_coingecko_service
+from src.services.coingecko import CoingeckoService
 
 router: APIRouter = APIRouter()
 
@@ -35,10 +36,11 @@ router: APIRouter = APIRouter()
 async def create(
     cryptocurrency: CryptocurrencyCreateSchema,
     db_engine: aiopg.sa.Engine = Depends(get_psql_engine),
+    coingecko: CoingeckoService = Depends(get_coingecko_service),
 ) -> Union[CryptocurrencyIdSchema, Response]:
     async with db_engine.acquire() as db_connection:
         cryptocurrency_model = Cryptocurrency(db_connection)
-        result = await cryptocurrency_model.create(cryptocurrency)
+        result = await cryptocurrency_model.create(cryptocurrency, coingecko)
 
         if not result:
             return RESPONSE_409_CONFLICT

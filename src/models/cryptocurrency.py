@@ -9,13 +9,20 @@ from src.models.schemas.cryptocurrency import \
 from src.models.schemas.responses.cryptocurrency import (
     CryptocurrencyBaseSchema, CryptocurrencyCreateSchema,
     CryptocurrencyIdSchema, CryptocurrencyUpdateSchema)
+from src.services.coingecko import CoingeckoService
 
 
 class Cryptocurrency(BaseModel):
     async def create(
-        self, cryptocurrency: CryptocurrencyCreateSchema
+        self, cryptocurrency: CryptocurrencyCreateSchema, coingecko: CoingeckoService
     ) -> Union[CryptocurrencyIdSchema, None]:
         """Insert data into database."""
+
+        coingecko_cryptocurrency = await coingecko.get_cryptocurrency(cryptocurrency.id)
+        if coingecko_cryptocurrency["symbol"] == cryptocurrency.symbol:
+            # TODO: better error handling, this is ugly
+            return None
+
         query = (
             insert(cryptocurrency_table)
             .values(
@@ -30,6 +37,7 @@ class Cryptocurrency(BaseModel):
         try:
             result = await self.conn.execute(query)
         except psycopg2.Error:
+            # TODO: better error handling, this is ugly
             return None
 
         row = await result.fetchone()
@@ -55,6 +63,7 @@ class Cryptocurrency(BaseModel):
         try:
             result = await self.conn.execute(query)
         except psycopg2.Error:
+            # TODO: better error handling, this is ugly
             return None
 
         row = await result.fetchone()
@@ -82,6 +91,7 @@ class Cryptocurrency(BaseModel):
         row = await result.fetchone()
 
         if not row:
+            # TODO: better error handling, this is ugly
             return None
 
         return CryptocurrencyIdSchema(id=row.id)
@@ -94,6 +104,7 @@ class Cryptocurrency(BaseModel):
         row = await result.fetchone()
 
         if not row:
+            # TODO: better error handling, this is ugly
             return None
 
         return CryptocurrencyBaseSchema(**row)

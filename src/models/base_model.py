@@ -2,6 +2,8 @@ import abc
 
 from aiopg.sa import SAConnection
 
+from src.services.coingecko import CoingeckoService
+
 
 class BaseModel(abc.ABC):
     """Base model class.
@@ -13,7 +15,7 @@ class BaseModel(abc.ABC):
         self.conn = conn
 
     @abc.abstractmethod
-    async def create(self, id: str) -> None:
+    async def create(self, id: str, coingecko: CoingeckoService) -> None:
         """Insert/update data into database."""
         raise NotImplementedError()
 
