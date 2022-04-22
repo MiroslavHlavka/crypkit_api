@@ -18,9 +18,14 @@ database etc
 docker-compose up alembic 
 ```
 
-## How to run locally
+# How to run locally
 ```bash
 docker-compose up api 
+```
+
+# Run tests
+```bash
+docker-compose -f docker-compose.test.yaml up 
 ```
 
 # Documentation
