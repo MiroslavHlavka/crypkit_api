@@ -5,7 +5,13 @@ Simple API for managing cryptocurrencies
 ## Grafana / Metrics
 I thought that I would download some premade dashboard for fastapi/starlette but there wasnt any 
 that would work out of the box with prometheus exporter lib that I chose -.- so the graphs are 
-very simple and not polished
+very simple and not polished.
+
+Default metric labels from starlette exporter are not great, so I would tweak that
+
+## Tests
+To have some meaningful tests I would need to create db handling, fill some test data into a 
+database etc
 
 # Creating DB structure with alembic
 ```bash

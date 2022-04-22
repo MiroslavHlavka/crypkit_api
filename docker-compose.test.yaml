@@ -1,0 +1,48 @@
+version: "3"
+services:
+  api:
+    container_name: crypkit_service_test_api
+    build: .
+    image: crypkit:latest
+    entrypoint: [""]
+    command: sh -c "pytest -vv tests"
+    environment:
+      CK_DEBUG: 1
+      CK_ENV: local
+      CK_DB_HOST: postgres_test
+      CK_DB_USER: postgres
+      CK_DB_PASSWORD: test
+      CK_DB_DBNAME: crypkit_test
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres_test
+      - alembic
+
+  postgres_test:
+    container_name: crypkit_test_db
+    image: postgres
+    environment:
+      POSTGRES_DB: crypkit_test
+      POSTGRES_PASSWORD: test
+    ports:
+        - "5432:5432"
+
+  alembic:
+    depends_on:
+      - postgres_test
+    build:
+      context: .
+    entrypoint: [""]
+    command: sh -c "python database_migration.py"
+    environment:
+      CK_DB_HOST: postgres_test
+      CK_DB_USER: postgres
+      CK_DB_PASSWORD: test
+      CK_DB_DBNAME: crypkit_test
+      PYTHONPATH: /usr/src/app/src
+    volumes:
+      - .:/app
+   

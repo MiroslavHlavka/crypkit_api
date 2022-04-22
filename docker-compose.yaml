@@ -1,9 +1,9 @@
 version: "3"
 services:
   api:
-    container_name: crpkit_service_api
+    container_name: crypkit_service_api
     build: .
-    image: crpkit:latest
+    image: crypkit:latest
     entrypoint: [""]
     command: sh -c "python run_api.py"
     environment:
@@ -21,6 +21,7 @@ services:
       - postgres
       - grafana
       - prometheus
+      - alembic
 
   postgres:
     container_name: crypkit_db

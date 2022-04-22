@@ -18,6 +18,8 @@ app = FastAPI(
     description="Service for managing cryptocurrencies",
     docs_url="/-/docs",
 )
+app.include_router(system_router)
+app.include_router(v1.router)
 
 
 @app.on_event("startup")
@@ -27,9 +29,6 @@ async def start_api():
     Load configuration, initialize logging, etc.
     """
     try:
-        app.include_router(system_router)
-        app.include_router(v1.router)
-
         # init postgresql engine
         app.state.psql = await postgresql.get_postgresql_connection(config)
 
