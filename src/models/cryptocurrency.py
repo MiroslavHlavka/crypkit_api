@@ -1,6 +1,7 @@
 from typing import Union
 
 import psycopg2
+from fastapi import HTTPException
 from sqlalchemy import delete, insert, select, update
 
 from src.models.base_model import BaseModel
@@ -19,9 +20,12 @@ class Cryptocurrency(BaseModel):
         """Insert data into database."""
 
         coingecko_cryptocurrency = await coingecko.get_cryptocurrency(cryptocurrency.id)
-        if coingecko_cryptocurrency["symbol"] == cryptocurrency.symbol:
-            # TODO: better error handling, this is ugly
-            return None
+        if coingecko_cryptocurrency and coingecko_cryptocurrency["symbol"] == cryptocurrency.symbol:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Symbol {cryptocurrency.symbol} is already used on "
+                f"coingecko",
+            )
 
         query = (
             insert(cryptocurrency_table)
@@ -36,9 +40,11 @@ class Cryptocurrency(BaseModel):
         )
         try:
             result = await self.conn.execute(query)
-        except psycopg2.Error:
-            # TODO: better error handling, this is ugly
-            return None
+        except psycopg2.Error as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Database error: {e}",
+            )
 
         row = await result.fetchone()
 
@@ -63,13 +69,18 @@ class Cryptocurrency(BaseModel):
         try:
             result = await self.conn.execute(query)
         except psycopg2.Error:
-            # TODO: better error handling, this is ugly
-            return None
+            raise HTTPException(
+                status_code=500,
+                detail=f"Database error: {e}",
+            )
 
         row = await result.fetchone()
 
         if not row:
-            return None
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cryptocurrency {id} not found",
+            )
 
         return CryptocurrencyBaseSchema(**row)
 
@@ -91,8 +102,10 @@ class Cryptocurrency(BaseModel):
         row = await result.fetchone()
 
         if not row:
-            # TODO: better error handling, this is ugly
-            return None
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cryptocurrency {id} not found",
+            )
 
         return CryptocurrencyIdSchema(id=row.id)
 
@@ -104,7 +117,9 @@ class Cryptocurrency(BaseModel):
         row = await result.fetchone()
 
         if not row:
-            # TODO: better error handling, this is ugly
-            return None
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cryptocurrency {id} not found",
+            )
 
         return CryptocurrencyBaseSchema(**row)
